@@ -1,0 +1,137 @@
+---
+title: 'Reproducible Research: Peer Assessment 1'
+output: html_document
+---
+
+## Loading and preprocessing the data
+```{r , echo=TRUE}
+#Load data
+PAM<-read.csv("activity/activity.csv")
+#Convert date from "factor" to "Date" type
+PAM$date<-as.Date(PAM$date, format = "%Y-%m-%d")
+
+```
+
+## What is mean total number of steps taken per day?
+
+1. Calculate the total number of steps taken per day
+```{r , echo=TRUE, warning=FALSE, message=FALSE}
+library(dplyr)
+PAM_DLY<-na.omit(PAM) %>%
+  group_by(date) %>%
+  summarise(Sum = sum(steps, na.rm = TRUE))
+```
+
+2. Make a histogram of the total number of steps taken each day
+```{r , echo=TRUE}
+hist(PAM_DLY$Sum, main = "Total number of steps taken each day", xlab = "Total steps")
+```
+
+3. Calculate and report the mean and median of the total number of steps taken per day
+```{r, echo = TRUE}
+options(scipen=1, digits=2)
+Mean_Dly<-mean(PAM_DLY$Sum)
+Median_Dly<-median(PAM_DLY$Sum)
+```
+
+- The **mean** of total number of steps taken each day  : `r Mean_Dly` steps.
+- The **median** of total number of steps taken each day: `r Median_Dly` steps.
+
+
+## What is the average daily activity pattern?
+Lets get the mean number of steps taken per day
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+PAM_AVG<-PAM %>%
+  group_by(interval) %>%
+  summarise(Avg = mean(steps, na.rm = TRUE))
+```
+
+1. Make a time series plot (i.e. \color{red}{\verb|type = "l"|}type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+
+```{r, echo = TRUE}
+with(PAM_AVG, plot(interval, Avg, 
+                    type = "l",
+                    xlab = "Intervals",
+                    ylab = "Average number of steps taken per day"))
+```
+
+2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+```{r}
+PAM_AVG_Max<-PAM_AVG$interval[PAM_AVG$Avg == max(PAM_AVG$Avg)]
+```
+
+The `r PAM_AVG_Max` interval, on average across all the days, contains the maximum number of steps
+
+## Imputing missing values
+1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with \color{red}{\verb|NA|}NAs)
+```{r, echo = TRUE}
+nulls<-sum(is.na(PAM))
+```
+This dataset contains `r nulls` missing values.
+
+2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+
+Lets Update the nulls with the average values of its 5 minute interval average across all days. Using the PAM_AVG data.
+
+3. Create a new dataframe PAM_NoNulls that is equal to the original dataset but with the missing data filled in.
+```{r, echo = TRUE}
+PAM_NoNulls<-PAM %>%
+  inner_join(PAM_AVG) %>%
+  mutate(steps = coalesce(steps, Avg)) %>%
+  select(steps, date, interval)
+head(PAM_NoNulls)
+```
+
+4. Histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day.
+
+Lets get the mean number of steps taken per day with new dataset.
+```{r, echo = TRUE}
+PAM_DLY1<-PAM_NoNulls %>%
+  group_by(date) %>%
+  summarise(Sum = sum(steps))
+```
+
+Histogram of the total number of steps taken each day
+```{r, echo = TRUE}
+hist(PAM_DLY1$Sum, main = "Total number of steps taken each day", xlab = "Total steps")
+```
+
+Calculate and report the mean and median total number of steps taken per day.
+```{r, echo = TRUE}
+
+Mean_Dly1<-mean(PAM_DLY1$Sum)
+Median_Dly1<-median(PAM_DLY1$Sum)
+```
+
+- The **mean** of total number of steps taken each day after processing NULLS  : `r Mean_Dly1` steps.
+
+- The **median** of total number of steps taken each dayafter processing NULLS : `r Median_Dly1` steps.
+
+There is no significant difference with imputing missing values. The overall Mean seem to remain the same. This corelates to the average values of the 5 minute intervals being used to replace NULL values. The median has slightly increased, However, this does not have a major difference.
+## Are there differences in activity patterns between weekdays and weekends?
+
+1. Create a new factor variable in the dataset with two levels, *weekday* and *weekend* indicating whether a given date is a weekday or weekend day.
+
+```{r, echo = TRUE}
+WeekDays<- c('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday')
+PAM$IsWeekEnd <- factor((weekdays(PAM$date) %in% WeekDays), 
+                   levels=c(FALSE, TRUE), 
+                   labels=c('weekend', 'weekday'))
+```
+
+2. Make a panel plot containing a time series plot (i.e. \color{red}{\verb|type = "l"|}type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
+
+```{r, echo = TRUE}
+library(lattice)
+
+PAM_AVG1<-PAM %>%
+  group_by(interval, IsWeekEnd) %>%
+  summarise(Avg = mean(steps, na.rm = TRUE))
+
+xyplot(Avg ~ interval | IsWeekEnd, 
+       data = PAM_AVG1,
+       layout= c(1,2),
+       type = "l",
+       ylab = "Number of steps",
+       xlab = "Interval")
+```
