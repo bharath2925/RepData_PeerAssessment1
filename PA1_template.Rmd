@@ -25,6 +25,9 @@ PAM_DLY<-na.omit(PAM) %>%
 2. Make a histogram of the total number of steps taken each day
 ```{r , echo=TRUE}
 hist(PAM_DLY$Sum, main = "Total number of steps taken each day", xlab = "Total steps")
+
+dev.copy(png, file = "TotalStepsEachDay.png", height = 480, width = 480)
+dev.off()
 ```
 
 3. Calculate and report the mean and median of the total number of steps taken per day
@@ -53,6 +56,8 @@ with(PAM_AVG, plot(interval, Avg,
                     type = "l",
                     xlab = "Intervals",
                     ylab = "Average number of steps taken per day"))
+dev.copy(png, file = "AvgStepsPerDay.png", height = 480, width = 480)
+dev.off()
 ```
 
 2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
@@ -94,6 +99,9 @@ PAM_DLY1<-PAM_NoNulls %>%
 Histogram of the total number of steps taken each day
 ```{r, echo = TRUE}
 hist(PAM_DLY1$Sum, main = "Total number of steps taken each day", xlab = "Total steps")
+
+dev.copy(png, file = "TotalStepsEachDayNoNulls.png", height = 480, width = 480)
+dev.off()
 ```
 
 Calculate and report the mean and median total number of steps taken per day.
@@ -108,6 +116,7 @@ Median_Dly1<-median(PAM_DLY1$Sum)
 - The **median** of total number of steps taken each dayafter processing NULLS : `r Median_Dly1` steps.
 
 There is no significant difference with imputing missing values. The overall Mean seem to remain the same. This corelates to the average values of the 5 minute intervals being used to replace NULL values. The median has slightly increased, However, this does not have a major difference.
+
 ## Are there differences in activity patterns between weekdays and weekends?
 
 1. Create a new factor variable in the dataset with two levels, *weekday* and *weekend* indicating whether a given date is a weekday or weekend day.
@@ -134,4 +143,7 @@ xyplot(Avg ~ interval | IsWeekEnd,
        type = "l",
        ylab = "Number of steps",
        xlab = "Interval")
+
+dev.copy(png, file = "StepsForWeekend.png", height = 480, width = 480)
+dev.off()
 ```
